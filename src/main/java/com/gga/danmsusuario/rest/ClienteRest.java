@@ -7,7 +7,11 @@ import java.util.OptionalInt;
 import java.util.stream.IntStream;
 
 import com.gga.danmsusuario.model.Cliente;
+import com.gga.danmsusuario.service.ClienteService;
+import com.gga.danmsusuario.service.UsuarioService;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,76 +32,66 @@ import io.swagger.annotations.ApiOperation;
 @Api(value = "ClienteRest", description = "Permite gestionar los clientes de la empresa")
 public class ClienteRest {
     
-    private static final List<Cliente> listaClientes = new ArrayList<>();
-    private static Integer ID_GEN = 1;
-
+    @Autowired private ClienteService clienteService;
+    
     @GetMapping(path = "/{id}")
     @ApiOperation(value = "Busca un cliente por id")
     public ResponseEntity<Cliente> clientePorId(@PathVariable Integer id){
 
-        Optional<Cliente> c =  listaClientes
-                .stream()
-                .filter(unCli -> unCli.getId().equals(id))
-                .findFirst();
-        return ResponseEntity.of(c);
+        Cliente c = clienteService.buscarClientePorId(id);
+
+        return ResponseEntity.ok(c);
     }
 
     @GetMapping
     @ApiOperation(value = "Busca la lista completa de los clientes")
     public ResponseEntity<List<Cliente>> todos(){
-        return ResponseEntity.ok(listaClientes);
+        ArrayList<Cliente> clientes = clienteService.getClientes();
+        return ResponseEntity.ok(clientes);
     }
 
     @PostMapping
     @ApiOperation(value = "Crea un nuevo cliente")
-    public ResponseEntity<Cliente> crear(@RequestBody Cliente nuevo){
-    	System.out.println(" crear cliente "+nuevo);
-        nuevo.setId(ID_GEN++);
-        listaClientes.add(nuevo);
-        return ResponseEntity.ok(nuevo);
+    public ResponseEntity<String> crear(@RequestBody Cliente nuevo){
+        
+        Cliente c = clienteService.guardarCliente(nuevo);
+
+        if(c==null){
+            return ResponseEntity.badRequest().body("Informacion de obras/clientes incorrectas");
+        }
+        else return ResponseEntity.status(HttpStatus.CREATED).body("Cliente creado");
+
     }
 
     @PutMapping(path = "/{id}")
     @ApiOperation(value = "Actualiza un cliente")
     public ResponseEntity<Cliente> actualizar(@RequestBody Cliente nuevo,  @PathVariable Integer id){
-        OptionalInt indexOpt =   IntStream.range(0, listaClientes.size())
-        .filter(i -> listaClientes.get(i).getId().equals(id))
-        .findFirst();
+        nuevo.setId(id);
+        Cliente modificado = clienteService.guardarCliente(nuevo);
 
-        if(indexOpt.isPresent()){
-            listaClientes.set(indexOpt.getAsInt(), nuevo);
-            return ResponseEntity.ok(nuevo);
-        } else {
+        if(modificado== null){
             return ResponseEntity.notFound().build();
+        }
+        else{
+            return ResponseEntity.ok(modificado);
         }
     }
 
     @DeleteMapping(path = "/{id}")
     @ApiOperation(value = "Borra a un cliente por id")
     public ResponseEntity<Cliente> borrar(@PathVariable Integer id){
-        OptionalInt indexOpt  =   IntStream.range(0, listaClientes.size())
-        .filter(i -> listaClientes.get(i).getId().equals(id))
-        .findFirst();
-
-        if(indexOpt.isPresent()){
-            listaClientes.remove(indexOpt.getAsInt());
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+       clienteService.bajaCliente(id);
+       return ResponseEntity.ok().build();
     }
 
     @GetMapping(path="/")
     @ApiOperation(value = "Busca un cliente por CUIT o Razon Social")
     public ResponseEntity<Cliente> buscarPorCuitORazonSocial(@RequestParam(required=true) String cuit, @RequestParam(required=false) String rs){
-        Optional<Cliente> c ;
-        if(rs == null){
-            c=listaClientes.stream().filter(cliente-> cliente.getCuit().equals(cuit)).findFirst();
-        }
-        else{
-           c = listaClientes.stream().filter(cliente-> cliente.getCuit().equals(cuit) && cliente.getRazonSocial().equals(rs)).findFirst();
-        }
-        return ResponseEntity.of(c);
+       Cliente c = clienteService.buscarClienteCuitORazonSocial(cuit, rs);
+       if(c==(null)){
+           return ResponseEntity.notFound().build();
+       }
+       else return ResponseEntity.ok(c);
     }
 
 }

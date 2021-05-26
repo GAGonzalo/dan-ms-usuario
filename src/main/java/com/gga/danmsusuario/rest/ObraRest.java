@@ -63,8 +63,10 @@ public class ObraRest {
         List<Obra> result = new ArrayList();
 
         for(Obra o : listaObra){
-            if (tipoObra!= null && o.getTipo().equals(tipoObra) ){
-                    result.add(o);
+            if(o.getTipo()!=null){
+                if (tipoObra!= null && o.getTipo().equals(tipoObra) ){
+                        result.add(o);
+                }
             }
         }
 
