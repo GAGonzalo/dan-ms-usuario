@@ -13,6 +13,22 @@ public class Cliente {
     private List<Obra> obras;
     private Usuario usuario;
 
+
+    @Override
+    public String toString() {
+        return "{" +
+            " id='" + getId() + "'" +
+            ", razonSocial='" + getRazonSocial() + "'" +
+            ", cuit='" + getCuit() + "'" +
+            ", mail='" + getMail() + "'" +
+            ", maxCuentaCorriente='" + getMaxCuentaCorriente() + "'" +
+            ", habilitadoOnline='" + isHabilitadoOnline() + "'" +
+            ", obras='" + getObras() + "'" +
+            ", usuario='" + getUsuario() + "'" +
+            "}";
+    }
+
+
     public Cliente() {
     }
 
